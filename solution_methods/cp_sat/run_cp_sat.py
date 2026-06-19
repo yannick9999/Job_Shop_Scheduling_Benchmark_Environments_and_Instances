@@ -4,9 +4,9 @@ import os
 
 from visualization import gantt_chart, precedence_chart
 from solution_methods.helper_functions import load_parameters, load_job_shop_env
-from solution_methods.CP_SAT.utils import results_saving, output_dir_exp_name
-from solution_methods.CP_SAT.models import FJSPSDSTmodel, FAJSPmodel, FJSPmodel, JSPmodel
-from solution_methods.CP_SAT.utils import solve_model
+from solution_methods.cp_sat.utils import results_saving, output_dir_exp_name
+from solution_methods.cp_sat.models import FJSPSDSTmodel, FAJSPmodel, FJSPmodel, JSPmodel
+from solution_methods.cp_sat.utils import solve_model
 
 PARAM_FILE = os.path.abspath("../../configs/cp_sat.toml")
 logging.basicConfig(level=logging.INFO)

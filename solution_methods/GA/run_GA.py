@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import time
 
 from deap import tools
 
@@ -42,7 +43,15 @@ def run_GA(jobShopEnv, population, toolbox, stats, hof, **kwargs):
     if kwargs['output']['logbook']:
         logging.info(logbook.stream)
 
+    start_time = time.time()
+    time_limit = kwargs['algorithm'].get('time_limit', float('inf'))
+    time_limit_reached = False
+
     for gen in range(1, kwargs['algorithm']['ngen'] + 1):
+        if time.time() - start_time >= time_limit:
+            time_limit_reached = True
+            gen -= 1
+            break
         # Vary the population
         offspring = variation(population, toolbox,
                               pop_size=kwargs['algorithm'].get('population_size'),
@@ -73,9 +82,14 @@ def run_GA(jobShopEnv, population, toolbox, stats, hof, **kwargs):
         hof.update(population)
         record_stats(gen, population, logbook, stats, kwargs['output']['logbook'], df_list, logging)
 
+    if time_limit_reached:
+        logging.info(f"Time limit ({time_limit}s) reached after {gen} generations.")
+    else:
+        logging.info(f"Completed all {gen} generations.")
+
     makespan, jobShopEnv = evaluate_individual(hof[0], jobShopEnv, reset=False)
     logging.info(f"Makespan: {makespan}")
-    return makespan, jobShopEnv
+    return makespan, jobShopEnv, gen, time_limit_reached
 
 
 def main(param_file=PARAM_FILE):
@@ -89,7 +103,7 @@ def main(param_file=PARAM_FILE):
     # Load the job shop environment, and initialize the genetic algorithm
     jobShopEnv = load_job_shop_env(parameters['instance'].get('problem_instance'))
     population, toolbox, stats, hof = initialize_run(jobShopEnv, **parameters)
-    makespan, jobShopEnv = run_GA(jobShopEnv, population, toolbox, stats, hof, **parameters)
+    makespan, jobShopEnv, generations_completed, time_limit_reached = run_GA(jobShopEnv, population, toolbox, stats, hof, **parameters)
 
     if makespan is not None:
         # Check output configuration and prepare output paths if needed
@@ -122,7 +136,9 @@ def main(param_file=PARAM_FILE):
 
         # Save results if enabled
         if save_results:
-            results_saving(makespan, output_dir, parameters)
+            results_saving(makespan, output_dir, parameters,
+                          generations_completed=generations_completed,
+                          time_limit_reached=time_limit_reached)
             logging.info(f"Results saved to {output_dir}")
 
 

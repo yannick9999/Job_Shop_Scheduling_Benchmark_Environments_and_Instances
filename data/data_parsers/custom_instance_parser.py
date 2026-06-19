@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # makespan, jobShopEnv = run_GA(jobShopEnv, population, toolbox, stats, hof, **parameters)
 
     # TEST CP_SAT:
-    from solution_methods.CP_SAT.run_cp_sat import run_CP_SAT
+    from solution_methods.cp_sat.run_cp_sat import run_CP_SAT
     parameters = {"instance": {"problem_instance": "custom_fjsp_sdst"},
                   "solver": {"time_limit": 3600},
                   "output": {"logbook": True}

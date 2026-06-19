@@ -2,12 +2,13 @@
 problem_instance = "/fajsp/dafjs/DAFJS01"
 
 [algorithm]
-population_size = 10    # number of individuals in the population
-ngen = 10               # number of generations
-seed = 5                # random seed
+population_size = 100   # number of individuals in the population
+ngen = 100000           # number of generations
+seed = 42               # random seed
 indpb = 0.1             # probability of mutating each gene
 cr = 0.7                # probability of mating
-multiprocessing = true  # use multiprocessing for parallel evaluation of individuals (default uses all threads)
+multiprocessing = false # use multiprocessing for parallel evaluation of individuals (default uses all threads)
+time_limit = 1800       # wall-clock time limit in seconds
 
 [output]
 logbook = true          # display logbook during search

@@ -54,7 +54,7 @@ def output_dir_exp_name(parameters):
     return output_dir, exp_name
 
 
-def results_saving(makespan, path, parameters):
+def results_saving(makespan, path, parameters, generations_completed=None, time_limit_reached=None):
     """
     Save the GA optimization results to a JSON file.
     """
@@ -64,7 +64,10 @@ def results_saving(makespan, path, parameters):
         "ngen": parameters["algorithm"]["ngen"],
         "population_size": parameters["algorithm"]["population_size"],
         "crossover_rate": parameters["algorithm"]["cr"],
-        "mutation_rate": parameters["algorithm"]["indpb"]
+        "mutation_rate": parameters["algorithm"]["indpb"],
+        "time_limit": parameters["algorithm"].get("time_limit"),
+        "generations_completed": generations_completed,
+        "time_limit_reached": time_limit_reached,
     }
 
     # Generate a default experiment name based on instance and solve time if not provided
