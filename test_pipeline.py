@@ -185,7 +185,7 @@ def run_ga():
         }
     }
     population, toolbox, stats, hof = initialize_run(jobShopEnv, **params)
-    makespan, _ = run_GA(jobShopEnv, population, toolbox, stats, hof, **params)
+    makespan, _, _, _ = run_GA(jobShopEnv, population, toolbox, stats, hof, **params)
     return makespan, 'done'
 
 # ---------------------------------------------------------------
