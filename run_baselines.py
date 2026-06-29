@@ -1,12 +1,10 @@
 import matplotlib
 matplotlib.use('Agg')
 
-import argparse
 import csv
 import glob
 import logging
 import os
-import sys
 import time
 
 try:
@@ -22,9 +20,9 @@ from solution_methods.GA.src.initialization import initialize_run
 
 logging.basicConfig(level=logging.INFO)
 
-DISPATCHING_METHODS = {'FIFO', 'SPT', 'MOR', 'MWR'}
-ALL_METHODS = DISPATCHING_METHODS | {'CP_SAT', 'GA'}
-SIZES = ['20x10', '50x10', '100x10', '200x10']
+DISPATCHING_METHODS = {'FIFO'}
+ALL_METHODS = DISPATCHING_METHODS
+SIZES = ['300x30']
 
 
 def get_instances(size):
@@ -142,58 +140,69 @@ def append_result(csv_path, header, row):
         writer.writerow(row)
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Run baseline methods on FJSSP instances')
-    parser.add_argument('--method', required=True, choices=sorted(ALL_METHODS))
-    parser.add_argument('--size', required=True, choices=SIZES)
-    parser.add_argument('--instance_idx', type=int, default=None)
-    parser.add_argument('--time_limit', type=int, default=1800)
-    parser.add_argument('--output_dir', type=str, default='results')
-    args = parser.parse_args()
+def run_combination(method, size, output_dir):
+    instances = get_instances(size)
+    csv_path = os.path.join(output_dir, method, f'{size}.csv')
+    header = get_csv_header(method)
 
-    instances = get_instances(args.size)
+    total = len(instances)
+    t_start = time.time()
 
-    if args.instance_idx is not None:
-        if args.instance_idx < 0 or args.instance_idx >= len(instances):
-            logging.error(f"instance_idx {args.instance_idx} out of range [0, {len(instances)-1}]")
-            sys.exit(1)
-        instances = [instances[args.instance_idx]]
-
-    csv_path = os.path.join(args.output_dir, args.method, f'{args.size}.csv')
-    header = get_csv_header(args.method)
-
-    for filepath in instances:
+    for i, filepath in enumerate(instances, 1):
         instance_name = os.path.basename(filepath)
         try:
             t0 = time.time()
-            result = run_instance(args.method, filepath, args.time_limit)
+            result = run_instance(method, filepath, time_limit=1800)
             runtime = time.time() - t0
 
             makespan = result['makespan']
-            if args.method in DISPATCHING_METHODS:
+            if method in DISPATCHING_METHODS:
                 row = [instance_name, makespan, f'{runtime:.1f}']
-            elif args.method == 'CP_SAT':
+            elif method == 'CP_SAT':
                 row = [instance_name, makespan, f'{runtime:.1f}',
                        result['status'], result['lower_bound']]
-            elif args.method == 'GA':
+            elif method == 'GA':
                 row = [instance_name, makespan, f'{runtime:.1f}',
                        result['generations_completed']]
-
-            print(f"{args.method} | {args.size} | {instance_name} | makespan={makespan} | time={runtime:.1f}s")
 
         except Exception as e:
             logging.error(f"Failed on {instance_name}: {e}")
             runtime = 0.0
-            if args.method in DISPATCHING_METHODS:
+            makespan = -1
+            if method in DISPATCHING_METHODS:
                 row = [instance_name, -1, f'{runtime:.1f}']
-            elif args.method == 'CP_SAT':
+            elif method == 'CP_SAT':
                 row = [instance_name, -1, f'{runtime:.1f}', 'ERROR', -1]
-            elif args.method == 'GA':
+            elif method == 'GA':
                 row = [instance_name, -1, f'{runtime:.1f}', -1]
 
-            print(f"{args.method} | {args.size} | {instance_name} | makespan=-1 | FAILED: {e}")
+        elapsed = time.time() - t_start
+        avg_per_instance = elapsed / i
+        eta = avg_per_instance * (total - i)
+        eta_min, eta_sec = divmod(int(eta), 60)
+        print(f"[{i}/{total}] {method} | {size} | {instance_name} | makespan={makespan} | time={runtime:.1f}s | ETA: {eta_min}m {eta_sec}s")
 
         append_result(csv_path, header, row)
+
+    total_elapsed = time.time() - t_start
+    print(f"Done {method} | {size}: {total} instances in {total_elapsed:.1f}s\n")
+
+
+def main():
+    methods = sorted(ALL_METHODS)
+    combos = [(m, s) for m in methods for s in SIZES]
+    total_combos = len(combos)
+
+    print(f"Running {total_combos} combinations: {len(methods)} methods x {len(SIZES)} sizes\n")
+
+    t_global = time.time()
+    for idx, (method, size) in enumerate(combos, 1):
+        print(f"=== [{idx}/{total_combos}] {method} / {size} ===")
+        run_combination(method, size, output_dir='results')
+
+    total_time = time.time() - t_global
+    t_min, t_sec = divmod(int(total_time), 60)
+    print(f"All done. Total time: {t_min}m {t_sec}s")
 
 
 if __name__ == '__main__':
