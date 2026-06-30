@@ -1,43 +1,42 @@
 #!/bin/bash
-#SBATCH --job-name=baselines_ga
+#SBATCH --job-name=ga_%x
+#SBATCH --account=def-cglee
 #SBATCH --partition=compute
 #SBATCH --nodes=1
-#SBATCH --time=03:00:00
-#SBATCH --output=logs/ga_all_%j.out
-#SBATCH --error=logs/ga_all_%j.err
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --time=24:00:00
+#SBATCH --output=logs/ga_%x_%j.out
+#SBATCH --error=logs/ga_%x_%j.err
 
-# Trillium gibt einen ganzen 192-Core Node.
-# GA braucht 1 Core pro Instanz, also alle 100 gleichzeitig.
-# 4 Groessen x 1 Durchgang x 30 min (time_limit) = ~2h worst case.
-# Walltime 3h mit Puffer.
+# Usage: sbatch --job-name=ga_20x10_g1 slurm/run_ga.sh 20x10 0 19
+SIZE=${1}
+START_IDX=${2}
+END_IDX=${3}
 
-mkdir -p logs results
+if [[ -z "$SIZE" || -z "$START_IDX" || -z "$END_IDX" ]]; then
+    echo "ERROR: Usage: sbatch slurm/run_ga.sh SIZE START_IDX END_IDX"
+    exit 1
+fi
+
+mkdir -p logs results/GA
 
 export PYTHONPATH="${SLURM_SUBMIT_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
 export MPLCONFIGDIR=/scratch/grafyann/matplotlib_cache
 mkdir -p $MPLCONFIGDIR
 
 PYTHON=/home/grafyann/master_thesis_env/bin/python
-MAX_PARALLEL=192
 
-run_size() {
-    local SIZE=$1
-    echo "=== GA $SIZE: starting $(date) ==="
+echo "=== GA: $SIZE instances $START_IDX-$END_IDX ==="
+echo "Start time: $(date)"
 
-    for i in $(seq 0 99); do
-        $PYTHON run_baselines.py --method GA --size $SIZE --instance_idx $i &
+# Multiprocessing is disabled by default (opt-in with --multiprocessing).
+# Parallelism comes from 5 jobs running simultaneously via submit_ga_split.sh.
+$PYTHON run_ga.py \
+    --size $SIZE \
+    --start_idx $START_IDX \
+    --end_idx $END_IDX \
+    --time_limit 3600
 
-        while (( $(jobs -rp | wc -l) >= MAX_PARALLEL )); do
-            sleep 5
-        done
-    done
-
-    wait
-    echo "=== GA $SIZE: finished $(date) ==="
-}
-
-for SIZE in 20x10 50x10 100x10 200x10; do
-    run_size $SIZE
-done
-
-echo "=== All GA jobs finished ==="
+echo "=== GA finished: $SIZE $START_IDX-$END_IDX ==="
+echo "End time: $(date)"
