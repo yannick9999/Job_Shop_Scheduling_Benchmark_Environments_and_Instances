@@ -15,12 +15,12 @@ from solution_methods.dispatching_rules.run_dispatching_rules import run_dispatc
 logging.basicConfig(level=logging.INFO)
 
 DISPATCHING_METHODS = ['FIFO', 'SPT', 'MOR', 'MWR']
-SIZES = ['20x10', '50x10', '100x10', '200x10']
+SIZES = ['edata', 'rdata', 'vdata']
 HEADER = ['instance_name', 'makespan', 'runtime_seconds']
 
 
 def get_instances(size):
-    pattern = os.path.join('data', 'fjsp', f'sagc_{size}', '*.fjs')
+    pattern = os.path.join('data', 'fjsp', size, '*.fjs')
     files = sorted(glob.glob(pattern))
     if not files:
         raise FileNotFoundError(f"No .fjs files found matching {pattern}")
@@ -69,15 +69,19 @@ def write_row(csv_path, row):
         writer.writerow(row)
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Run dispatching rules on FJSSP instances')
-    parser.add_argument('--method', required=True, choices=DISPATCHING_METHODS)
-    parser.add_argument('--size', required=True, choices=SIZES)
-    parser.add_argument('--output_dir', type=str, default='results')
-    args = parser.parse_args()
+def format_duration(seconds):
+    minutes, secs = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    if hours:
+        return f'{hours}h{minutes:02d}m'
+    if minutes:
+        return f'{minutes}m{secs:02d}s'
+    return f'{secs}s'
 
-    instances = get_instances(args.size)
-    csv_path = os.path.join(args.output_dir, 'DR', args.method, f'{args.size}.csv')
+
+def run_size_for_method(method, size, output_dir, elapsed_so_far, total_remaining):
+    instances = get_instances(size)
+    csv_path = os.path.join(output_dir, 'DR', method, f'{size}.csv')
 
     # Skip already completed instances (resumable)
     done = set()
@@ -86,24 +90,57 @@ def main():
             reader = csv.DictReader(f)
             for row in reader:
                 done.add(row['instance_name'])
-        logging.info(f"Resuming: {len(done)} instances already done for {args.method} {args.size}")
+        logging.info(f"Resuming: {len(done)} instances already done for {method} {size}")
 
     for filepath in instances:
         instance_name = os.path.basename(filepath)
         if instance_name in done:
+            total_remaining[0] -= 1
             continue
         try:
             t0 = time.time()
-            makespan = run_instance(args.method, filepath)
+            makespan = run_instance(method, filepath)
             runtime = time.time() - t0
             row = [instance_name, makespan, f'{runtime:.1f}']
-            print(f"{args.method} | {args.size} | {instance_name} | makespan={makespan} | time={runtime:.1f}s")
+            status = f"makespan={makespan} | time={runtime:.1f}s"
         except Exception as e:
             logging.error(f"Failed on {instance_name}: {e}")
+            runtime = 0.0
             row = [instance_name, -1, '0.0']
-            print(f"{args.method} | {args.size} | {instance_name} | FAILED: {e}")
+            status = f"FAILED: {e}"
 
         write_row(csv_path, row)
+
+        elapsed_so_far[0] += runtime
+        total_remaining[0] -= 1
+        done_count = elapsed_so_far[1]
+        done_count += 1
+        elapsed_so_far[1] = done_count
+        avg = elapsed_so_far[0] / done_count if done_count else 0
+        eta = format_duration(avg * total_remaining[0])
+        print(f"{method} | {size} | {instance_name} | {status} | ETA={eta}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description='Run dispatching rules on FJSSP instances')
+    parser.add_argument('--method', required=True, choices=DISPATCHING_METHODS + ['all'])
+    parser.add_argument('--size', required=True, choices=SIZES + ['all'], nargs='+')
+    parser.add_argument('--output_dir', type=str, default='results')
+    args = parser.parse_args()
+
+    methods = DISPATCHING_METHODS if args.method == 'all' else [args.method]
+    if 'all' in args.size:
+        sizes = SIZES
+    else:
+        sizes = args.size
+
+    # total instance count across all (method, size) combos, for the ETA
+    total_remaining = [sum(len(get_instances(size)) for size in sizes) * len(methods)]
+    elapsed_so_far = [0.0, 0]  # [total runtime spent, instances timed]
+
+    for method in methods:
+        for size in sizes:
+            run_size_for_method(method, size, args.output_dir, elapsed_so_far, total_remaining)
 
 
 if __name__ == '__main__':
