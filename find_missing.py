@@ -19,8 +19,15 @@ import os
 import sys
 
 
+# Diese Groessen liegen direkt unter data/fjsp/{size}/, ohne "sagc_" Praefix.
+NO_PREFIX_SIZES = {'1005', '1510', '2005'}
+
+SIZES = ['20x10', '50x10', '100x10', '200x10', '1005', '1510', '2005']
+
+
 def find_missing(size):
-    pattern = os.path.join('data', 'fjsp', f'sagc_{size}', '*.fjs')
+    subdir = size if size in NO_PREFIX_SIZES else f'sagc_{size}'
+    pattern = os.path.join('data', 'fjsp', subdir, '*.fjs')
     all_files = sorted(glob.glob(pattern))
     if not all_files:
         print(f"ERROR: No .fjs files found matching {pattern}", file=sys.stderr)
@@ -49,8 +56,7 @@ def find_missing(size):
 
 def main():
     parser = argparse.ArgumentParser(description='Find missing CP-SAT instance indices')
-    parser.add_argument('--size', required=True,
-                        choices=['20x10', '50x10', '100x10', '200x10'])
+    parser.add_argument('--size', required=True, choices=SIZES)
     parser.add_argument('--verbose', action='store_true',
                         help='Print summary to stderr instead of just indices')
     args = parser.parse_args()

@@ -26,11 +26,15 @@ from solution_methods.cp_sat.utils import solve_model
 
 logging.basicConfig(level=logging.INFO)
 
-SIZES = ['20x10', '50x10', '100x10', '200x10']
+SIZES = ['20x10', '50x10', '100x10', '200x10', '1005', '1510', '2005']
+
+# Diese Groessen liegen direkt unter data/fjsp/{size}/, ohne "sagc_" Praefix.
+NO_PREFIX_SIZES = {'1005', '1510', '2005'}
 
 
 def get_instances(size):
-    pattern = os.path.join('data', 'fjsp', f'sagc_{size}', '*.fjs')
+    subdir = size if size in NO_PREFIX_SIZES else f'sagc_{size}'
+    pattern = os.path.join('data', 'fjsp', subdir, '*.fjs')
     files = sorted(glob.glob(pattern))
     if not files:
         raise FileNotFoundError(f"No .fjs files found matching {pattern}")
