@@ -43,17 +43,17 @@ def plot(JobShop):
                 operation_label,
                 ha='center',
                 va='center',
-                fontsize=8
+                fontsize=18
             )
 
     fig = ax.figure
     fig.set_size_inches(12, 6)
 
     ax.set_yticks(range(JobShop.nr_of_machines))
-    ax.set_yticklabels([f'M{machine_id+1}' for machine_id in range(JobShop.nr_of_machines)])
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Machine')
-    ax.set_title('Gantt Chart')
+    ax.set_yticklabels([f'M{machine_id+1}' for machine_id in range(JobShop.nr_of_machines)], fontsize=16)
+    ax.set_xlabel('Time', fontsize=18)
+    ax.set_ylabel('Machine', fontsize=18)
+    ax.tick_params(axis='x', labelsize=16)
     ax.grid(True)
 
     return plt
