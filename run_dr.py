@@ -15,8 +15,8 @@ from solution_methods.dispatching_rules.run_dispatching_rules import run_dispatc
 logging.basicConfig(level=logging.INFO)
 
 DISPATCHING_METHODS = ['FIFO', 'SPT', 'MOR', 'MWR']
-SIZES = ['edata', 'rdata', 'vdata']
-HEADER = ['instance_name', 'makespan', 'runtime_seconds']
+SIZES = ['edata', 'rdata', 'vdata', 'indist', 'ood']
+HEADER = ['instance_name', 'makespan']
 
 
 def get_instances(size):
@@ -101,12 +101,12 @@ def run_size_for_method(method, size, output_dir, elapsed_so_far, total_remainin
             t0 = time.time()
             makespan = run_instance(method, filepath)
             runtime = time.time() - t0
-            row = [instance_name, makespan, f'{runtime:.1f}']
+            row = [instance_name, makespan]
             status = f"makespan={makespan} | time={runtime:.1f}s"
         except Exception as e:
             logging.error(f"Failed on {instance_name}: {e}")
             runtime = 0.0
-            row = [instance_name, -1, '0.0']
+            row = [instance_name, -1]
             status = f"FAILED: {e}"
 
         write_row(csv_path, row)
