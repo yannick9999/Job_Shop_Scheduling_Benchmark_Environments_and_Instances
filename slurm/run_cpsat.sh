@@ -2,11 +2,11 @@
 #SBATCH --job-name=cpsat
 #SBATCH --partition=compute
 #SBATCH --nodes=1
-#SBATCH --time=08:00:00
+#SBATCH --time=12:00:00
 #SBATCH --output=logs/cpsat_%x_%j.out
 #SBATCH --error=logs/cpsat_%x_%j.err
 
-# Usage:
+# Usage (eine Groesse auf 5 Jobs aufteilen, je 20 Instanzen):
 #   sbatch --job-name=cpsat_20x10_g1 slurm/run_cpsat.sh 20x10 0 19
 #   sbatch --job-name=cpsat_20x10_g2 slurm/run_cpsat.sh 20x10 20 39
 #   ... bis g5 mit 80 99
@@ -14,10 +14,13 @@
 # Oder bequem alle 5 Gruppen auf einmal einreichen:
 #   bash slurm/submit_cpsat_split.sh 20x10
 #
-# Jeder Job verarbeitet nur einen Teilbereich der 100 Instanzen, was die
-# Anzahl gleichzeitig laufender Prozesse pro Node reduziert. Die Per-Instance
-# CSV Dateien sind resumable, also kann ein abgebrochener Job einfach neu
-# eingereicht werden.
+# Oder mehrere Groessen gleichzeitig, je EIN Job pro Groesse (0..99):
+#   bash slurm/submit_cpsat_sizes.sh 10x10 30x10 40x10 20x20 20x30
+#
+# Jeder Job verarbeitet nur einen Teilbereich der Instanzen, was die
+# Anzahl gleichzeitig laufender Prozesse pro Node reduziert (siehe
+# MAX_PARALLEL unten). Die Per-Instance CSV Dateien sind resumable, also
+# kann ein abgebrochener Job einfach neu eingereicht werden.
 
 SIZE=${1:?"Usage: sbatch run_cpsat.sh <SIZE> <START_IDX> <END_IDX>"}
 START_IDX=${2:?"Usage: sbatch run_cpsat.sh <SIZE> <START_IDX> <END_IDX>"}

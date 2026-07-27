@@ -2,10 +2,15 @@
 # Reicht 5 CP-SAT Jobs ein, jeder mit 20 Instanzen.
 #
 # Usage:
+#   bash slurm/submit_cpsat_split.sh 10x10
 #   bash slurm/submit_cpsat_split.sh 20x10
+#   bash slurm/submit_cpsat_split.sh 30x10
+#   bash slurm/submit_cpsat_split.sh 40x10
 #   bash slurm/submit_cpsat_split.sh 50x10
 #   bash slurm/submit_cpsat_split.sh 100x10
 #   bash slurm/submit_cpsat_split.sh 200x10
+#   bash slurm/submit_cpsat_split.sh 20x20
+#   bash slurm/submit_cpsat_split.sh 20x30
 
 SIZE=${1:?"Usage: bash submit_cpsat_split.sh <SIZE>"}
 

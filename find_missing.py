@@ -19,14 +19,25 @@ import os
 import sys
 
 
-# Diese Groessen liegen direkt unter data/fjsp/{size}/, ohne "sagc_" Praefix.
-NO_PREFIX_SIZES = {'1005', '1510', '2005'}
+SIZES = [
+    '10x10', '20x10', '30x10', '40x10', '50x10', '100x10', '200x10',
+    '20x20', '20x30', '1005', '1510', '2005',
+]
 
-SIZES = ['20x10', '50x10', '100x10', '200x10', '1005', '1510', '2005']
+
+def dirname_for_size(size):
+    """Wandelt ein 'JxM' Groessenlabel (z.B. '20x10') in den tatsaechlichen
+    Ordnernamen unter data/fjsp/ um (z.B. '2010' = 20 Jobs + 2-stellig
+    gepaddete Maschinenzahl). Labels ohne 'x' (z.B. '1005') sind bereits
+    der Ordnername und werden unveraendert zurueckgegeben."""
+    if 'x' not in size:
+        return size
+    jobs, machines = size.split('x')
+    return f'{int(jobs)}{int(machines):02d}'
 
 
 def find_missing(size):
-    subdir = size if size in NO_PREFIX_SIZES else f'sagc_{size}'
+    subdir = dirname_for_size(size)
     pattern = os.path.join('data', 'fjsp', subdir, '*.fjs')
     all_files = sorted(glob.glob(pattern))
     if not all_files:
