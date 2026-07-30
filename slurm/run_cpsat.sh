@@ -2,6 +2,8 @@
 #SBATCH --job-name=cpsat
 #SBATCH --partition=compute
 #SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=40
 #SBATCH --time=12:00:00
 #SBATCH --output=logs/cpsat_%x_%j.out
 #SBATCH --error=logs/cpsat_%x_%j.err

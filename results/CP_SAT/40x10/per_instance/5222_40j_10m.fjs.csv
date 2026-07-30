@@ -1,0 +1,2 @@
+instance_name,makespan,runtime_seconds,status,lower_bound
+5222_40j_10m.fjs,370.0,3602.1,FEASIBLE,-1
