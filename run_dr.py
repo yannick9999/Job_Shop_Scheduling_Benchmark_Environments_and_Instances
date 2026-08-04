@@ -16,6 +16,10 @@ logging.basicConfig(level=logging.INFO)
 
 DISPATCHING_METHODS = ['FIFO', 'SPT', 'MOR', 'MWR']
 SIZES = ['edata', 'rdata', 'vdata', 'indist', 'ood']
+DATASETS = {
+    'SD1': ['10x5', '15x10', '20x10', '20x5', '30x10', '40x10'],
+    'SD2': ['10x5+mix', '15x10+mix', '20x10+mix', '20x5+mix', '30x10+mix', '40x10+mix'],
+}
 HEADER = ['instance_name', 'makespan']
 
 
@@ -79,9 +83,19 @@ def format_duration(seconds):
     return f'{secs}s'
 
 
+def expand_sizes(sizes):
+    expanded = []
+    for size in sizes:
+        if size in DATASETS:
+            expanded.extend(f'{size}/{sub}' for sub in DATASETS[size])
+        else:
+            expanded.append(size)
+    return expanded
+
+
 def run_size_for_method(method, size, output_dir, elapsed_so_far, total_remaining):
     instances = get_instances(size)
-    csv_path = os.path.join(output_dir, 'DR', method, f'{size}.csv')
+    csv_path = os.path.join(output_dir, method, f'{size}.csv')
 
     # Skip already completed instances (resumable)
     done = set()
@@ -124,7 +138,7 @@ def run_size_for_method(method, size, output_dir, elapsed_so_far, total_remainin
 def main():
     parser = argparse.ArgumentParser(description='Run dispatching rules on FJSSP instances')
     parser.add_argument('--method', required=True, choices=DISPATCHING_METHODS + ['all'])
-    parser.add_argument('--size', required=True, choices=SIZES + ['all'], nargs='+')
+    parser.add_argument('--size', required=True, choices=SIZES + list(DATASETS) + ['all'], nargs='+')
     parser.add_argument('--output_dir', type=str, default='results')
     args = parser.parse_args()
 
@@ -133,6 +147,7 @@ def main():
         sizes = SIZES
     else:
         sizes = args.size
+    sizes = expand_sizes(sizes)
 
     # total instance count across all (method, size) combos, for the ETA
     total_remaining = [sum(len(get_instances(size)) for size in sizes) * len(methods)]
