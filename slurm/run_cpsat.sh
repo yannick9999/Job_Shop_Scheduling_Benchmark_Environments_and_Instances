@@ -35,17 +35,39 @@ export MPLCONFIGDIR=/scratch/grafyann/matplotlib_cache
 mkdir -p $MPLCONFIGDIR
 
 PYTHON=/home/grafyann/master_thesis_env/bin/python
-MAX_PARALLEL=10
 TIME_LIMIT=3600
+CPUS=${SLURM_CPUS_PER_TASK:-40}
+
+# Groessere Instanzen brauchen deutlich mehr RAM pro CP-SAT Solve. Bei
+# fixer MAX_PARALLEL=10 fuehrte das bei 200x10 zu Speicherueberlastung
+# und "double free or corruption" Abstuerzen (Heap-Corruption unter
+# OOM-Druck), zusaetzlich verschaerft dadurch dass CP-SAT ohne explizites
+# num_search_workers-Limit versucht, alle CPUs des Nodes zu nutzen -> mit
+# 10 parallelen Prozessen massives Thread-Oversubscription.
+case "$SIZE" in
+    200x10|20x20|20x30)
+        MAX_PARALLEL=4
+        ;;
+    *)
+        MAX_PARALLEL=10
+        ;;
+esac
+
+# CP-SAT Threads pro Instanz begrenzen, damit MAX_PARALLEL Prozesse
+# zusammen nicht mehr Threads als CPUS anfordern.
+NUM_WORKERS=$(( CPUS / MAX_PARALLEL ))
+if (( NUM_WORKERS < 1 )); then
+    NUM_WORKERS=1
+fi
 
 PER_INSTANCE_DIR="results/CP_SAT/${SIZE}/per_instance"
 MASTER_CSV="results/CP_SAT/${SIZE}.csv"
 mkdir -p "$PER_INSTANCE_DIR"
 
-echo "=== CP-SAT $SIZE (idx ${START_IDX}-${END_IDX}, max_parallel=$MAX_PARALLEL, time_limit=${TIME_LIMIT}s): starting $(date) ==="
+echo "=== CP-SAT $SIZE (idx ${START_IDX}-${END_IDX}, max_parallel=$MAX_PARALLEL, num_workers=$NUM_WORKERS, time_limit=${TIME_LIMIT}s): starting $(date) ==="
 
 for i in $(seq $START_IDX $END_IDX); do
-    $PYTHON run_cpsat_only.py --size $SIZE --instance_idx $i --time_limit $TIME_LIMIT &
+    $PYTHON run_cpsat_only.py --size $SIZE --instance_idx $i --time_limit $TIME_LIMIT --num_workers $NUM_WORKERS &
     while (( $(jobs -rp | wc -l) >= MAX_PARALLEL )); do
         sleep 5
     done

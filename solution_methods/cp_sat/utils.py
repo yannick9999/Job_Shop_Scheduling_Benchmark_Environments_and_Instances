@@ -34,7 +34,7 @@ class SolutionPrinter(cp_model.CpSolverSolutionCallback):
 
 
 def solve_model(
-    model: cp_model.CpModel, time_limit: float | int
+    model: cp_model.CpModel, time_limit: float | int, num_workers: int | None = None
 ) -> tuple[cp_model.CpSolver, int, int]:
     """
     Solves the given constraint programming model within the specified time limit.
@@ -42,12 +42,19 @@ def solve_model(
     Args:
         model: The constraint programming model to solve.
         time_limit: The maximum time limit in seconds for solving the model.
+        num_workers: Caps CP-SAT's internal search threads. Without this, CP-SAT
+            defaults to using all CPUs it detects on the node, which oversubscribes
+            the machine when several instances are solved in parallel (e.g. via
+            slurm/run_cpsat.sh) and can crash with native heap corruption under
+            memory pressure.
 
     Returns:
         A tuple containing the solver object, the status of the solver, and the number of solution_methods found.
     """
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = time_limit
+    if num_workers is not None:
+        solver.parameters.num_search_workers = num_workers
     solution_printer = SolutionPrinter()
     status = solver.Solve(model, solution_printer)
     solution_count = solution_printer.solution_count()

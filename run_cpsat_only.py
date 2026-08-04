@@ -67,12 +67,12 @@ def load_job_shop_env(problem_instance):
     return jobShopEnv
 
 
-def run_cpsat(filepath, time_limit):
+def run_cpsat(filepath, time_limit, num_workers=None):
     instance_path = build_instance_path(filepath)
     jobShopEnv = load_job_shop_env(instance_path)
 
     model, vars = FJSPmodel.fjsp_cp_sat_model(jobShopEnv)
-    solver, status, solution_count = solve_model(model, time_limit)
+    solver, status, solution_count = solve_model(model, time_limit, num_workers)
     jobShopEnv, results = FJSPmodel.update_env(
         jobShopEnv, vars, solver, status, solution_count, time_limit
     )
@@ -102,6 +102,10 @@ def main():
     parser.add_argument('--size', required=True, choices=SIZES)
     parser.add_argument('--instance_idx', type=int, required=True)
     parser.add_argument('--time_limit', type=int, default=3600)
+    parser.add_argument('--num_workers', type=int, default=None,
+                         help='Caps CP-SAT search threads per instance. Defaults to '
+                              'letting CP-SAT use all detected CPUs, which oversubscribes '
+                              'the node when run in parallel; set this to cpus-per-task / MAX_PARALLEL.')
     parser.add_argument('--output_dir', type=str, default='results')
     args = parser.parse_args()
 
@@ -122,7 +126,7 @@ def main():
 
     try:
         t0 = time.time()
-        result = run_cpsat(filepath, args.time_limit)
+        result = run_cpsat(filepath, args.time_limit, args.num_workers)
         runtime = time.time() - t0
         row = [
             instance_name,
