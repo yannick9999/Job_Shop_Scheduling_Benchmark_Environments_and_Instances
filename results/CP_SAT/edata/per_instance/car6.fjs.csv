@@ -1,0 +1,2 @@
+instance_name,makespan,runtime_seconds,status,lower_bound
+car6.fjs,7990.0,23.0,OPTIMAL,-1

@@ -1,0 +1,2 @@
+instance_name,makespan,runtime_seconds,status,lower_bound
+mt20.fjs,1088.0,2.9,OPTIMAL,-1

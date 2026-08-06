@@ -1,0 +1,2 @@
+instance_name,makespan,runtime_seconds,status,lower_bound
+la32.fjs,1660.0,3600.2,FEASIBLE,-1

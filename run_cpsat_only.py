@@ -29,6 +29,7 @@ logging.basicConfig(level=logging.INFO)
 SIZES = [
     '10x10', '20x10', '30x10', '40x10', '50x10', '100x10', '200x10',
     '20x20', '20x30', '1005', '1510', '2005',
+    'edata', 'rdata', 'vdata', 'brandimarte',
 ]
 
 

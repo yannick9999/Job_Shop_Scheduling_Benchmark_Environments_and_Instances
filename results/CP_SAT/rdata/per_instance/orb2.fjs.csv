@@ -1,0 +1,2 @@
+instance_name,makespan,runtime_seconds,status,lower_bound
+orb2.fjs,696.0,0.9,OPTIMAL,-1
